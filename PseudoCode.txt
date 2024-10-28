@@ -19,12 +19,12 @@ function on_price_update():
     # ถ้าไม่มีคำสั่งเปิดอยู่
     if no_open_trades():
         # เงื่อนไขสำหรับเปิดคำสั่งซื้อ (BUY)
-        if ema50 > ema9 and bid_price > ema200:
+        if ema50 > ema9 and bid_price > ema200: #เส้น50กับ200ทับกันเหนือเส้น9 = Buy
             place_trade("BUY", lotsize, ask_price, take_profit_pips)  # เปิดคำสั่งซื้อ
             set_last_order("BUY", ask_price)  # ตั้งค่าว่าคำสั่งล่าสุดคือ BUY
         
         # เงื่อนไขสำหรับเปิดคำสั่งขาย (SELL)
-        elif ema50 < ema9 and bid_price < ema200:
+        elif ema50 < ema9 and bid_price < ema200: #เส้น50กับ200ทับกันใต้เส้น9 = Sell
             place_trade("SELL", lotsize, bid_price, take_profit_pips)  # เปิดคำสั่งขาย
             set_last_order("SELL", bid_price)  # ตั้งค่าว่าคำสั่งล่าสุดคือ SELL
 
