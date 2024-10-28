@@ -15,7 +15,7 @@ Symbol: EUR/USD
 
 Timeframe: M30
 
-Backtesting
+**Backtesting**
 
 Modeling: Every tick (for optimal accuracy)
 
