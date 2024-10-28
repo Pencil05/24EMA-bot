@@ -1,10 +1,10 @@
 # ตั้งค่าบอท
-lotsize = 0.3          # ขนาดล็อตของคำสั่งซื้อขาย
-distance_pips = 60     # ระยะห่างในหน่วย pips สำหรับเปิดคำสั่งเพิ่มเติม
-take_profit_pips = 30  # จุดทำกำไรในหน่วย pips
-magic_number = 123456  # รหัสเฉพาะของคำสั่งที่บอทเปิด
-point_pips = 10        # ค่าปรับแต่ง pip ตามสัญลักษณ์การซื้อขาย
-saved_profit = 0       # กำไรที่บันทึกไว้จากการซื้อขาย
+lotsize = 0.3          # ตั้งไว้0.3lotกำลังดี จะลองเพิ่มก็ได้เผื่อได้กำไรเพิ่ม
+distance_pips = 60     # ระยะห่างสำหรับเปิดคำสั่งเพิ่มเติม
+take_profit_pips = 30  # TP
+magic_number = 123456  # ตั้งไว้เฉยๆไม่งั้นโค้ดรันไม่ได้
+point_pips = 10        # ค่าปรับแต่งตามสัญลักษณ์การซื้อขาย
+saved_profit = 0       # กระปุกออมสิน เตรียมไว้ริบกำไรมาทีละ2เหรียญ
 
 # เมื่อมีการอัปเดตราคา (OnTick)
 function on_price_update():
@@ -19,12 +19,12 @@ function on_price_update():
     # ถ้าไม่มีคำสั่งเปิดอยู่
     if no_open_trades():
         # เงื่อนไขสำหรับเปิดคำสั่งซื้อ (BUY)
-        if ema50 > ema9 and bid_price > ema200: #เส้น50กับ200ทับกันเหนือเส้น9 = Buy
+        if ema50 > ema9 and bid_price > ema200: #เส้น50กับ200ทับกันเหนือเส้น9 จะBuy
             place_trade("BUY", lotsize, ask_price, take_profit_pips)  # เปิดคำสั่งซื้อ
             set_last_order("BUY", ask_price)  # ตั้งค่าว่าคำสั่งล่าสุดคือ BUY
         
         # เงื่อนไขสำหรับเปิดคำสั่งขาย (SELL)
-        elif ema50 < ema9 and bid_price < ema200: #เส้น50กับ200ทับกันใต้เส้น9 = Sell
+        elif ema50 < ema9 and bid_price < ema200: #เส้น50กับ200ทับกันใต้เส้น9 จะSell
             place_trade("SELL", lotsize, bid_price, take_profit_pips)  # เปิดคำสั่งขาย
             set_last_order("SELL", bid_price)  # ตั้งค่าว่าคำสั่งล่าสุดคือ SELL
 
@@ -60,13 +60,13 @@ function manage_open_trades(bid_price, ask_price):
                 set_last_order("BUY", ask_price)  # ตั้งค่าว่าคำสั่งล่าสุดคือ BUY
 
 
-# ฟังก์ชันบันทึกกำไรบางส่วนเมื่อเกินเงื่อนไขที่ตั้งไว้
+# ฟังก์ชันบันทึกกำไรบางส่วนเมื่อเกินเงื่อนไขที่ตั้งไว้(ส่วนเสริม)
 function save_profit(trade):
-    profit = get_trade_profit(trade)  # รับกำไรของคำสั่ง
+    profit = get_trade_profit(trade)  # รับค่ากำไรมา
     
     # ถ้ากำไรมากกว่าเงื่อนไขที่ตั้งไว้
     if profit > profit_threshold:
-        portion_to_save = 2.0  # บันทึกกำไรไว้ 2 USD
+        portion_to_save = 2.0  # บันทึกกำไรไว้ 2 USD แก้ได้แต่ไม่ควรเกิน3(ในบอทใช้1)
         saved_profit += portion_to_save  # เพิ่มกำไรที่บันทึกไว้
         remaining_profit = profit - portion_to_save  # กำไรที่เหลืออยู่
         
