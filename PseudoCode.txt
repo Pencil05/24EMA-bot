@@ -1,0 +1,74 @@
+# ตั้งค่าบอท
+lotsize = 0.3          # ขนาดล็อตของคำสั่งซื้อขาย
+distance_pips = 60     # ระยะห่างในหน่วย pips สำหรับเปิดคำสั่งเพิ่มเติม
+take_profit_pips = 30  # จุดทำกำไรในหน่วย pips
+magic_number = 123456  # รหัสเฉพาะของคำสั่งที่บอทเปิด
+point_pips = 10        # ค่าปรับแต่ง pip ตามสัญลักษณ์การซื้อขาย
+saved_profit = 0       # กำไรที่บันทึกไว้จากการซื้อขาย
+
+# เมื่อมีการอัปเดตราคา (OnTick)
+function on_price_update():
+    ask_price = get_ask_price()      # รับราคาขาย
+    bid_price = get_bid_price()      # รับราคาซื้อ
+
+    # ตรวจสอบแนวโน้มตลาดโดยใช้ EMA
+    ema200 = calculate_ema(200)
+    ema50 = calculate_ema(50)
+    ema9 = calculate_ema(9)
+
+    # ถ้าไม่มีคำสั่งเปิดอยู่
+    if no_open_trades():
+        # เงื่อนไขสำหรับเปิดคำสั่งซื้อ (BUY)
+        if ema50 > ema9 and bid_price > ema200:
+            place_trade("BUY", lotsize, ask_price, take_profit_pips)  # เปิดคำสั่งซื้อ
+            set_last_order("BUY", ask_price)  # ตั้งค่าว่าคำสั่งล่าสุดคือ BUY
+        
+        # เงื่อนไขสำหรับเปิดคำสั่งขาย (SELL)
+        elif ema50 < ema9 and bid_price < ema200:
+            place_trade("SELL", lotsize, bid_price, take_profit_pips)  # เปิดคำสั่งขาย
+            set_last_order("SELL", bid_price)  # ตั้งค่าว่าคำสั่งล่าสุดคือ SELL
+
+    # จัดการคำสั่งซื้อขายที่เปิดอยู่
+    manage_open_trades(bid_price, ask_price)
+
+
+# ฟังก์ชันเปิดคำสั่งซื้อขายตามประเภท ขนาด และจุดทำกำไร
+function place_trade(type, lot, price, take_profit_pips):
+    take_profit = calculate_take_profit(type, price, take_profit_pips)  # คำนวณจุดทำกำไร
+    execute_trade(type, lot, price, take_profit)  # เปิดคำสั่งซื้อขาย
+
+
+# จัดการคำสั่งซื้อขายที่เปิดอยู่ และสลับประเภทคำสั่ง
+function manage_open_trades(bid_price, ask_price):
+    for each open_trade:                         # สำหรับทุกคำสั่งที่เปิดอยู่
+        trade_type = get_trade_type(open_trade)  # ประเภทของคำสั่งปัจจุบัน
+        open_price = get_trade_open_price(open_trade)  # ราคาที่เปิดคำสั่ง
+        
+        # ตรวจสอบเงื่อนไขเพื่อสลับประเภทคำสั่ง
+        if (trade_type == "BUY" and bid_price >= open_price + distance_pips * point_pips) or
+           (trade_type == "SELL" and bid_price <= open_price - distance_pips * point_pips):
+            
+            close_trade(open_trade)              # ปิดคำสั่งปัจจุบัน
+            save_profit(open_trade)              # บันทึกกำไรบางส่วน
+            
+            # สลับประเภทคำสั่งสำหรับคำสั่งถัดไป
+            if last_order_was("BUY"):
+                place_trade("SELL", lotsize, bid_price, take_profit_pips)  # เปิดคำสั่งขาย
+                set_last_order("SELL", bid_price)  # ตั้งค่าว่าคำสั่งล่าสุดคือ SELL
+            else:
+                place_trade("BUY", lotsize, ask_price, take_profit_pips)  # เปิดคำสั่งซื้อ
+                set_last_order("BUY", ask_price)  # ตั้งค่าว่าคำสั่งล่าสุดคือ BUY
+
+
+# ฟังก์ชันบันทึกกำไรบางส่วนเมื่อเกินเงื่อนไขที่ตั้งไว้
+function save_profit(trade):
+    profit = get_trade_profit(trade)  # รับกำไรของคำสั่ง
+    
+    # ถ้ากำไรมากกว่าเงื่อนไขที่ตั้งไว้
+    if profit > profit_threshold:
+        portion_to_save = 2.0  # บันทึกกำไรไว้ 2 USD
+        saved_profit += portion_to_save  # เพิ่มกำไรที่บันทึกไว้
+        remaining_profit = profit - portion_to_save  # กำไรที่เหลืออยู่
+        
+        if remaining_profit > 0:
+            print("Remaining profit for further trades: ", remaining_profit)  # แสดงกำไรที่เหลืออยู่เพื่อใช้ในการซื้อขายต่อไป
